@@ -23,9 +23,14 @@ package com.eclipsesource.json;
 
 import static com.eclipsesource.json.TestUtil.assertException;
 import static com.eclipsesource.json.TestUtil.serializeAndDeserialize;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -770,6 +775,83 @@ public class JsonObject_Test {
     inOrder.verify(writer).writeMemberName("e");
     inOrder.verify(writer).writeMemberSeparator();
     inOrder.verify(writer).writeLiteral("null");
+    inOrder.verify(writer).writeObjectClose();
+    inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  @SuppressWarnings("boxing")
+  public void write_withMultipleValuesCanonically() throws IOException {
+    JsonWriter writer = mock(JsonWriter.class);
+    when(writer.isCanonical()).thenReturn(true);
+
+    object.add("e", (String)null);
+    object.add("b", 3.14f);
+    object.add("c", "foo");
+    object.add("a", 23);
+    object.add("d", true);
+
+    object.write(writer);
+
+    InOrder inOrder = inOrder(writer);
+    inOrder.verify(writer).writeObjectOpen();
+    inOrder.verify(writer).writeMemberName("a");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeNumber("23");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("b");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeNumber("3.14");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("c");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeString("foo");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("d");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeLiteral("true");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("e");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeLiteral("null");
+    inOrder.verify(writer).writeObjectClose();
+    inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  @SuppressWarnings("boxing")
+  public void write_withMultipleValuesNonCanonically() throws IOException {
+    JsonWriter writer = mock(JsonWriter.class);
+    when(writer.isCanonical()).thenReturn(false);
+
+    object.add("e", (String)null);
+    object.add("b", 3.14f);
+    object.add("c", "foo");
+    object.add("a", 23);
+    object.add("d", true);
+
+    object.write(writer);
+
+    InOrder inOrder = inOrder(writer);
+    inOrder.verify(writer).writeObjectOpen();
+    inOrder.verify(writer).writeMemberName("e");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeLiteral("null");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("b");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeNumber("3.14");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("c");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeString("foo");
+    inOrder.verify(writer).writeMemberName("a");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeNumber("23");
+    inOrder.verify(writer).writeObjectSeparator();
+    inOrder.verify(writer).writeMemberName("d");
+    inOrder.verify(writer).writeMemberSeparator();
+    inOrder.verify(writer).writeLiteral("true");
     inOrder.verify(writer).writeObjectClose();
     inOrder.verifyNoMoreInteractions();
   }

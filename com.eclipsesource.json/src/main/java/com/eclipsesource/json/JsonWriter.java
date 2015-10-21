@@ -42,9 +42,19 @@ class JsonWriter {
                                             'a', 'b', 'c', 'd', 'e', 'f'};
 
   protected final Writer writer;
+  protected final boolean canonical;
 
   JsonWriter(Writer writer) {
+    this(writer, false /* canonical */);
+  }
+
+  JsonWriter(Writer writer, boolean canonical) {
     this.writer = writer;
+    this.canonical = canonical;
+  }
+
+  protected boolean isCanonical() {
+    return canonical;
   }
 
   protected void writeLiteral(String value) throws IOException {

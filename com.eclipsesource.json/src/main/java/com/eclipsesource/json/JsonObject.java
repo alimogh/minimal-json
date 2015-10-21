@@ -26,6 +26,7 @@ import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -734,6 +735,32 @@ public class JsonObject extends JsonValue implements Iterable<Member> {
   @Override
   void write(JsonWriter writer) throws IOException {
     writer.writeObjectOpen();
+    if (writer.isCanonical()) {
+      writeMembersCanonically(writer);
+    } else {
+      writeMembersNonCanonically(writer);
+    }
+    writer.writeObjectClose();
+  }
+
+  private void writeMembersCanonically(JsonWriter writer) throws IOException {
+    List<Member> members = members();
+    Collections.sort(members, new MemberKeyComparator());
+    Iterator<Member> memberIterator = members.iterator();
+    boolean first = true;
+    while (memberIterator.hasNext()) {
+      Member member = memberIterator.next();
+      if (!first) {
+        writer.writeObjectSeparator();
+      }
+      writer.writeMemberName(member.name);
+      writer.writeMemberSeparator();
+      member.value.write(writer);
+      first = false;
+    }
+  }
+
+  private void writeMembersNonCanonically(JsonWriter writer) throws IOException {
     Iterator<String> namesIterator = names.iterator();
     Iterator<JsonValue> valuesIterator = values.iterator();
     boolean first = true;
@@ -746,7 +773,6 @@ public class JsonObject extends JsonValue implements Iterable<Member> {
       valuesIterator.next().write(writer);
       first = false;
     }
-    writer.writeObjectClose();
   }
 
   @Override
@@ -788,6 +814,16 @@ public class JsonObject extends JsonValue implements Iterable<Member> {
       return index;
     }
     return names.lastIndexOf(name);
+  }
+
+  private List<Member> members() {
+    List<Member> result = new ArrayList<Member>(names.size());
+    final Iterator<String> namesIterator = names.iterator();
+    final Iterator<JsonValue> valuesIterator = values.iterator();
+    while (namesIterator.hasNext()) {
+      result.add(new Member(namesIterator.next(), valuesIterator.next()));
+    }
+    return result;
   }
 
   private synchronized void readObject(ObjectInputStream inputStream)
@@ -859,6 +895,12 @@ public class JsonObject extends JsonValue implements Iterable<Member> {
       return name.equals(other.name) && value.equals(other.value);
     }
 
+  }
+
+  private static class MemberKeyComparator implements Comparator<Member> {
+    public int compare(Member o1, Member o2) {
+      return o1.name.compareTo(o2.name);
+    }
   }
 
   static class HashIndexTable {

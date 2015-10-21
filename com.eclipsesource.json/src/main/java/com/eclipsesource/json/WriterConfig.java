@@ -32,6 +32,16 @@ public abstract class WriterConfig {
   /**
    * Write JSON in its minimal form, without any additional whitespace. This is the default.
    */
+  public static WriterConfig CANONICAL = new WriterConfig() {
+    @Override
+    JsonWriter createWriter(Writer writer) {
+      return new JsonWriter(writer, true /* canonical */);
+    }
+  };
+
+  /**
+   * Write JSON in its minimal form, without any additional whitespace. This is the default.
+   */
   public static WriterConfig MINIMAL = new WriterConfig() {
     @Override
     JsonWriter createWriter(Writer writer) {
